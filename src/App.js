@@ -1,6 +1,7 @@
 
 import './App.css';
 
+
 import {
   BrowserRouter as Router,
   Switch,
@@ -12,8 +13,12 @@ import {
 import React, { useState, useEffect } from 'react';
 import Products from './Components/Products/Products';
 import AddProduct from './Components/Products/AddProduct';
+import Usages from './Components/Usages/Usages';
+
+
 import { Row, Col } from 'antd';
 import axios from 'axios';
+
 import {
   Form,
   Input,
@@ -24,23 +29,22 @@ import {
   DatePicker,
   InputNumber,
   TreeSelect,
-  
 } from 'antd';
 
 
-function App () {
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNjE0OTEyNjcwLCJleHAiOjE2MTc1MDQ2NzB9.SezEZ-33rCkZxVd4BafVeumQ2VtGFWggoe9U4dHFo9U"
-  const instance = axios.create({
-    baseURL: 'http://localhost:1337',
-    headers: {'Authorization': 'Bearer '+ token }
-  });
+const App = () => {
 
 
   const [products, setProduct] = useState([])
-
+  const [usages, setUsages] = useState([])
+  const [user, setUser] = useState({username:'no-user'})
   
+  const getUsages = async () =>{
+    const response = await axios.get(`/usages`)
+    setUsages(response.data)
+  }
   const getProduct = async () =>{
-    const response = await instance.get(`/products`)
+    const response = await axios.get(`/products`)
     setProduct(response.data)
   }
 
@@ -52,60 +56,58 @@ function App () {
       password: "Password12345"
     })
 
-    console.log(response.data.user.username)
+    console.log(response.data.user.id)
 
-    const newInstance = axios.create({
+    const instance = axios.create({
       baseURL: 'http://localhost:1337',
       headers: {'Authorization': 'Bearer '+ response.data.jwt }
     });
 
     const new_response = await instance.post(`/usages`,
         {
-        name:response.data.user.username,
-        product: data.id
+          users_permissions_user:response.data.user.id,
+          product: data.id
         }
     )
     console.log(data.name)
     console.log(new_response)
+
+    setProduct(
+      products.map((product) =>
+         product.id === new_response.data.product.id ? { ...product,  stock: product.stock - 1 } : product
+      )
+    )
+    
     const updateProductResponse = await instance.put(`/products/` + new_response.data.product.id,
         {
-        
           stock: new_response.data.product.stock - 1
         }
     )
     console.log(updateProductResponse)
-    // const products = products.map(product =>{
-    //   if(new_response.data.)
-    // })
-
-   
     
-  }
+    
+  }// consumeProduct
 
   const addProduct = async (data) =>{
-    const response = await instance.post(`/products`,
+    const response = await axios.post(`/products`,
         {
-        name:data.name,
-        stock:data.stock
+          name:data.name,
+          stock:data.stock
         }
     )
     setProduct([...products,response.data])
-   
-    
-  }
+   }
 
 
   useEffect(() => {
-      getProduct()
-      
-     
+    getProduct()   
+    getUsages()
   },[]);
 
 
 
   return (
-    <Router>
-    
+  <Router>
     <Row>
            <Col span={12} offset={6} color='@blue-5' style={{backgroundColor:'#096dd9',color: '@blue-5'}}>
                <h1 style={{color:"white"}}>TODO APP TEST PRO SOLUTIONS - Header</h1>
@@ -116,36 +118,33 @@ function App () {
           <Button><Link to="/">Home</Link></Button>
           <Button><Link to="/products">Products</Link></Button>
           <Button><Link to="/add">Add Product</Link></Button>
-          
-        </Col>
-        <Col>
-        
-        </Col>
-        <Col>
-        
+          <Button><Link to="/usages">Usages</Link></Button>
         </Col>
       </Row>
       <Row>
         <Col span={12} offset={6}>
            <Switch>
-          <Route excact path="/add" >
-             <AddProduct addProduct={addProduct} />
-          </Route>
-          <Route excact path="/products">
-          <Products products={products} consume={consumeProduct}/>
-          </Route>
-          <Route excact path="/">
-          <h1>landing</h1>
-          </Route>
-        </Switch>
-      </Col>
-        </Row>
+              <Route excact path="/add" >
+                  <AddProduct addProduct={addProduct} />
+              </Route>
+              <Route excact path="/usages" >
+                  <Usages usages={usages} />
+              </Route>
+              <Route excact path="/products">
+                  <Products products={products} consume={consumeProduct}/>
+              </Route>
+              <Route excact path="/">
+                  <h1>landing</h1>
+              </Route>
+            </Switch>
+         </Col>
+      </Row>
         <Row>
            <Col span={12} offset={6} color='@blue-5' style={{backgroundColor:'#073069',color: '@blue-5'}}>
               <a> <h3 style={{alignItems: "center", color:"red"}}>Among US - Footer</h3></a>
            </Col>  
-    </Row>
-    </Router>
+         </Row>
+</Router>
 
   );
 }

@@ -14,7 +14,7 @@ import axios from 'axios';
     return (
        <div>
 
-       {products.map((product=><ProductItems key={product.id} consume={consume} product={product}/>))}
+          {products.map((product=><ProductItems key={product.id} consume={consume} product={product}/>))}
         
        </div>
     )

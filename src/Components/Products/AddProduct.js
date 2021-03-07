@@ -3,7 +3,7 @@ import { Form, Input, Button, InputNumber } from 'antd';
 
 import { useState,useEffect } from 'react'
 
-
+import { useHistory } from "react-router";
 
 import {
   Link
@@ -11,6 +11,7 @@ import {
 
 const AddTask = ({addProduct}) => {
  
+const history = useHistory();
 
 const [name, setName] = useState('')
 const [stock, setStock] = useState(10)
@@ -26,6 +27,9 @@ const onSubmit = (e) => {
     addProduct({name,stock});
        setName('')
        setStock(10)
+       history.push({
+        pathname:  "/products",    
+     });
     
 }
 
@@ -35,7 +39,7 @@ const onSubmit = (e) => {
       label="Product Name: "
       name="name"
     >
-      <Input  onChange={(e) => setName(e.target.value)} value={name}/>
+      <Input  defaultValue={name} onChange={(e) => setName(e.target.value)} value={name}/>
     </Form.Item>
 
     <Form.Item
@@ -44,7 +48,7 @@ const onSubmit = (e) => {
       
       
     >
-    <InputNumber min={1} max={100} defaultValue={10} value={stock} onChange={(e) => setStock(e.target.value)}/>
+    <InputNumber min={1} max={100} defaultValue={stock} value={stock} onChange={(e) => setStock(e.target.value)}/>
     </Form.Item>
     <Form.Item >
       <Button type="primary" htmlType="submit">
