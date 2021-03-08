@@ -22,7 +22,8 @@
   },
   "proxy": "http://localhost:1337",
   "eslintConfig": {
-    "extends": [
+    
+  "extends": [
       "react-app",
       "react-app/jest"
     ]

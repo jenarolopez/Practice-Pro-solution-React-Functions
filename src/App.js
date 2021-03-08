@@ -13,6 +13,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import Products from './Components/Products/Products';
 import AddProduct from './Components/Products/AddProduct';
+import Login from './Components/auth/Login';
 import Usages from './Components/Usages/Usages';
 
 
@@ -33,44 +34,65 @@ import {
 
 
 const App = () => {
-
+  
+  
+  
 
   const [products, setProduct] = useState([])
   const [usages, setUsages] = useState([])
-  const [user, setUser] = useState({username:'no-user'})
+  const [user, setUser] = useState()
+  const [login, setLogin] = useState(<Link style={{color:"white", alignItems:"center"}} to="/login">Login</Link>)
   
+
+  const setLocalStorage = (user) =>{
+    console.log(user)
+    
+    localStorage.setItem('username', user.user.username);
+    localStorage.setItem('id', user.user.id);
+  }
+
   const getUsages = async () =>{
     const response = await axios.get(`/usages`)
     setUsages(response.data)
   }
+
   const getProduct = async () =>{
     const response = await axios.get(`/products`)
     setProduct(response.data)
   }
-
-  const consumeProduct = async (data) =>{
-
-    const response = await axios.post(`http://localhost:1337/auth/local`,
-    {
-      identifier: "Jen",
-      password: "Password12345"
+  const userLogout = () =>{
+    setUser(null)
+    setLogin(<Link style={{color:"white", alignItems:"center"}} to="/login">Login</Link>)
+    localStorage.clear();
+  }
+  const userLogin = async (data) =>{
+    const response = await axios.post(`http://localhost:1337/auth/local`, {
+      identifier: data.username,
+      password: data.password
     })
-
-    console.log(response.data.user.id)
-
+    setUser(response.data)
+    setLogin(<Link style={{color:"red", alignItems:"center"}} onClick={userLogout} to="/login">Logout</Link>)
+    setLocalStorage(response.data)
+    
+    
+  }
+ 
+  const consumeProduct = async (data) =>{
+    
     const instance = axios.create({
       baseURL: 'http://localhost:1337',
-      headers: {'Authorization': 'Bearer '+ response.data.jwt }
+      headers: {'Authorization': 'Bearer '+ user.jwt }
     });
 
     const new_response = await instance.post(`/usages`,
         {
-          users_permissions_user:response.data.user.id,
+          users_permissions_user:user.user.id,
           product: data.id
         }
     )
-    console.log(data.name)
-    console.log(new_response)
+
+    setUsages([new_response.data,...usages])
+    console.log("usage added")
 
     setProduct(
       products.map((product) =>
@@ -83,9 +105,9 @@ const App = () => {
           stock: new_response.data.product.stock - 1
         }
     )
-    console.log(updateProductResponse)
+    console.log("product Updated")
     
-    
+   
   }// consumeProduct
 
   const addProduct = async (data) =>{
@@ -95,22 +117,32 @@ const App = () => {
           stock:data.stock
         }
     )
-    setProduct([...products,response.data])
+    setProduct([response.data,...products])
    }
-
-
+   
   useEffect(() => {
     getProduct()   
     getUsages()
-  },[]);
-
+    
+    if(localStorage.getItem('username') !== null) {
+      setUser({jwt: localStorage.getItem('jwt'),
+                user: {
+                          username: localStorage.getItem('username'),
+                          id: localStorage.getItem('id')
+                      }
+              })
+      setLogin(<Link style={{color:"red", alignItems:"center"}} onClick={userLogout} to="/login">Logout</Link>)
+    }
+    
+  },[user]);
 
 
   return (
   <Router>
     <Row>
-           <Col span={12} offset={6} color='@blue-5' style={{backgroundColor:'#096dd9',color: '@blue-5'}}>
-               <h1 style={{color:"white"}}>TODO APP TEST PRO SOLUTIONS - Header</h1>
+           <Col span={12} offset={6}  style={{backgroundColor:'#096dd9', flex: 1}}>
+              <div> <h1 style={{color:"white", alignItems:"center"}}>TODO APP TEST PRO SOLUTIONS - Header</h1> </div>
+              <div> {login} </div>
            </Col> 
       </Row>
       <Row>
@@ -131,7 +163,10 @@ const App = () => {
                   <Usages usages={usages} />
               </Route>
               <Route excact path="/products">
-                  <Products products={products} consume={consumeProduct}/>
+                  <Products products={products} user={user} consume={consumeProduct}/>
+              </Route>
+              <Route excact path="/login" >
+                  <Login login={userLogin}/>
               </Route>
               <Route excact path="/">
                   <h1>landing</h1>

@@ -3,12 +3,11 @@ import UsageItems from './UsageItems'
 
 const Usages = ({usages}) => {
 
-    console.log(usages)
 
     return (
         <div>
 
-        {usages.sort((a, b) => b.date - a.date).map((usage=><UsageItems key={usage.id}  usage={usage}/>))}
+        { usages ? usages.map((usage=><UsageItems key={usage.id}  usage={usage}/>)) : "No usage"}
       
      </div>
     )
